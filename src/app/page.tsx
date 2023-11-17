@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { PDFDocument, PageSizes, PDFPage } from "pdf-lib";
 import download from "downloadjs";
 import DraggableList from "@/app/component/Droppable";
+import Image from "next/image";
+import { toast } from "react-toastify";
 
 enum ImageFormats {
   PNG,
@@ -26,7 +28,6 @@ export default function PDFMerger() {
       const pdfDoc = await PDFDocument.create();
       setPdf(pdfDoc);
     }
-
     initPdf().then((r) => {
       console.log("@man.zip_");
     });
@@ -186,6 +187,10 @@ export default function PDFMerger() {
   }
 
   async function downloadPdf() {
+    if (fileList.length === 0) {
+      toast.error("No file selected yet ! 🤔");
+      return;
+    }
     if (pdf == null) {
       console.log("pdf is not initiated");
       return;
@@ -200,6 +205,8 @@ export default function PDFMerger() {
       const pdfBytes = await pdf.save();
       console.log("download", pdfBytes);
       download(pdfBytes, fileName + ".pdf", "application/pdf");
+      toast.dismiss();
+      toast.success("File successfully converted ! 🎉");
       await resetPDF();
     }
   }
@@ -340,15 +347,16 @@ export default function PDFMerger() {
                 htmlFor="text"
                 className="mb-3 block text-base font-medium"
               >
-                Page Size
+                Page Size (Under Development)
               </label>
               <select
                 name="pageSize"
                 id="pageSize"
-                className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200"
+                className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200 cursor-not-allowed"
                 onChange={(e) => {
                   setPageSize(e.target.value);
                 }}
+                disabled
               >
                 <option value="A4">A4</option>
                 <option value="Letter">Letter</option>
@@ -378,15 +386,28 @@ export default function PDFMerger() {
             <div className="rounded-md bg-white shadow-md py-4 px-8 text-base font-medium dark:white dark:bg-[#343A40] duration-200">
               <div className="flex items-center justify-between">
                 {fileList.length > 0 && (
-                  <DraggableList
-                    fileList={fileList}
-                    setFileList={setFileList}
-                  />
+                  <div id="text no-file" className="text-center">
+                    <span className="block text-xl font-semibold mb-3">
+                      GOOD LUCK ! 🧠
+                    </span>
+                    <DraggableList
+                      fileList={fileList}
+                      setFileList={setFileList}
+                    />
+                  </div>
                 )}
                 {fileList.length === 0 && (
-                  <li className="text-startduration-200">
-                    No file uploaded. yet.
-                  </li>
+                  <div id="text no-file" className="text-center">
+                    <span className="block text-xl font-semibold mb-3">
+                      NO FILE SELECTED YET ! 🤔
+                    </span>
+                    <Image
+                      src="/giphy.webp"
+                      width={500}
+                      height={500}
+                      alt="NOT FOUND"
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -402,6 +423,19 @@ export default function PDFMerger() {
           </div>
         </div>
       </div>
+      <footer className="flex items-center justify-center py-4">
+        <span className="text-base font-medium text-gray-400">
+          Made with ❤️ by{" "}
+          <a
+            href="https://www.instagram.com/man.zip_/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#774FE9]"
+          >
+            @man.zip_
+          </a>
+        </span>
+      </footer>
     </>
   );
 }
