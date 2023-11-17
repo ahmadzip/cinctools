@@ -28,7 +28,7 @@ export default function PDFMerger() {
     }
 
     initPdf().then((r) => {
-      console.log("init pdf successfully");
+      console.log("@man.zip_");
     });
   }, []);
 
