@@ -340,6 +340,7 @@ export default function PDFMerger() {
                 id="text"
                 placeholder="@man.zip_"
                 className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200"
+                onChange={(e) => setFileName(e.target.value)}
               />
             </div>
             <div className="mb-5">
