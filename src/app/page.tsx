@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { PDFDocument, PageSizes, PDFPage } from "pdf-lib";
 import download from "downloadjs";
-import Image from "next/image";
 import DraggableList from "@/app/component/Droppable";
 
 enum ImageFormats {
@@ -135,32 +134,25 @@ export default function PDFMerger() {
 
       return copiedPages;
     } else {
-      console.log("pdf not init");
+      console.log("PDF File is not init");
     }
   }
 
-  /**
-   *
-   * @param index index of file in file list
-   * @returns new starting index of the file in pdf
-   */
   function getNewPageIndex(index: number) {
     if (pdf) {
       while (index > pdf.getPageCount()) {
-        pdf.addPage([1, 1]); // mark as temporary pages
+        pdf.addPage([1, 1]);
       }
 
-      // get the new starting index of the file in pdf
       while (
         index < pdf.getPageCount() &&
-        pdf.getPage(index).getSize().width > 1 && // if it's not temporary pages
+        pdf.getPage(index).getSize().width > 1 &&
         pdf.getPage(index).getSize().height > 1
       ) {
         index++;
         console.log("increment index to", index);
       }
 
-      // if the actual starting index are used by temporary pages
       if (
         index < pdf.getPageCount() &&
         pdf.getPage(index).getSize().width == 1 &&
@@ -179,7 +171,6 @@ export default function PDFMerger() {
 
   async function getJpgImage(imageBytes: string | ArrayBuffer) {
     if (pdf == null) {
-      console.log("pdf not init");
       return;
     }
 
@@ -188,7 +179,6 @@ export default function PDFMerger() {
 
   async function getPngImage(imageBytes: string | ArrayBuffer) {
     if (pdf == null) {
-      console.log("pdf not init");
       return;
     }
 
@@ -200,13 +190,9 @@ export default function PDFMerger() {
       console.log("pdf is not initiated");
       return;
     }
-    console.log(pageSize);
 
     const fileDataArray: { file: File; buffer: ArrayBuffer | string }[] =
       await readFile();
-
-    console.log(fileDataArray);
-
     const pdfPagesArray: Array<PDFPage | PDFPage[] | undefined> =
       await addPages(fileDataArray);
 
@@ -218,11 +204,6 @@ export default function PDFMerger() {
     }
   }
 
-  /**
-   *
-   * @param fileDataArray array of file data
-   * @returns pdf pages
-   */
   function addPages(
     fileDataArray: { file: File; buffer: ArrayBuffer | string }[]
   ): Promise<Array<PDFPage | undefined | PDFPage[]>> {
@@ -252,10 +233,6 @@ export default function PDFMerger() {
     });
   }
 
-  /**
-   * convert array of file to array of file data
-   * @returns array of file data
-   */
   function readFile(): Promise<{ file: File; buffer: ArrayBuffer | string }[]> {
     console.log("file list", fileList);
     return new Promise((resolve, reject) => {
@@ -379,7 +356,6 @@ export default function PDFMerger() {
                 <option value="Fit">Fit</option>
               </select>
             </div>
-            {/* DROP DOWN CHANGE ORIENTATION */}
             <div className="mb-5">
               <label
                 htmlFor="text"
