@@ -1,4 +1,4 @@
-"use effect";
+"use client";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
