@@ -1,113 +1,431 @@
-import Image from 'next/image'
+"use client";
+import { useEffect, useState } from "react";
+import { PDFDocument, PageSizes, PDFPage } from "pdf-lib";
+import download from "downloadjs";
+import Image from "next/image";
+import DraggableList from "@/app/component/Droppable";
 
-export default function Home() {
+enum ImageFormats {
+  PNG,
+  JPG,
+}
+
+enum FileOrientation {
+  Potrait,
+  Landscape,
+}
+
+export default function PDFMerger() {
+  const [pdf, setPdf] = useState<null | PDFDocument>(null);
+  const [fileList, setFileList] = useState<[] | Array<File>>([]);
+  const [pageSize, setPageSize] = useState<string>("A4");
+  const [orientation, setOrientation] = useState(FileOrientation.Potrait);
+  const [fileName, setFileName] = useState<string>("");
+
+  useEffect(() => {
+    async function initPdf() {
+      const pdfDoc = await PDFDocument.create();
+      setPdf(pdfDoc);
+    }
+
+    initPdf().then((r) => {
+      console.log("init pdf successfully");
+    });
+  }, []);
+
+  async function insertImage(
+    index: number,
+    imageBytes: string | ArrayBuffer,
+    type: ImageFormats
+  ) {
+    if (pdf == null) {
+      console.log("pdf is not init");
+      return;
+    }
+    let image;
+    switch (type) {
+      case ImageFormats.JPG:
+        image = await getJpgImage(imageBytes);
+        break;
+      case ImageFormats.PNG:
+        image = await getPngImage(imageBytes);
+        break;
+      default:
+        return;
+    }
+
+    if (image) {
+      let pageW, pageH;
+      if (pageSize === "Fit") {
+        pageW = image.width;
+        pageH = image.height;
+      } else {
+        if (orientation === FileOrientation.Potrait) {
+          pageW = PageSizes[pageSize as keyof typeof PageSizes][0];
+          pageH = PageSizes[pageSize as keyof typeof PageSizes][1];
+        } else {
+          pageW = PageSizes[pageSize as keyof typeof PageSizes][1];
+          pageH = PageSizes[pageSize as keyof typeof PageSizes][0];
+        }
+      }
+      const dims = image.scaleToFit(pageW, pageH);
+      index = getNewPageIndex(index);
+      const page = pdf.insertPage(index, [pageW, pageH]);
+
+      page.drawImage(image, {
+        x: pageW / 2 - dims.width / 2,
+        y: pageH / 2 - dims.height / 2,
+        width: dims.width,
+        height: dims.height,
+      });
+
+      return page;
+    } else {
+      console.log("failed to get image");
+    }
+  }
+
+  function scaleToFitPage(page: PDFPage) {
+    let pageW, pageH;
+    if (pageSize === "Fit") {
+      pageW = page.getWidth();
+      pageH = page.getHeight();
+    } else {
+      if (orientation === FileOrientation.Potrait) {
+        pageW = PageSizes[pageSize as keyof typeof PageSizes][0];
+        pageH = PageSizes[pageSize as keyof typeof PageSizes][1];
+      } else {
+        pageW = PageSizes[pageSize as keyof typeof PageSizes][1];
+        pageH = PageSizes[pageSize as keyof typeof PageSizes][0];
+      }
+    }
+    let scaleW = (pageW / page.getWidth()) * 1.0;
+    let scaleH = (pageH / page.getHeight()) * 1.0;
+
+    if (scaleW < scaleH) {
+      let newH = (page.getHeight() / page.getWidth()) * pageW;
+      scaleH = (newH / page.getHeight()) * 1.0;
+    } else {
+      let newW = (page.getWidth() / page.getHeight()) * pageH;
+      scaleW = (newW / page.getWidth()) * 1.0;
+    }
+
+    page.scale(scaleW, scaleH);
+    page.setMediaBox(
+      -(pageW / 2 - page.getWidth() / 2),
+      -(pageH / 2 - page.getHeight() / 2),
+      pageW,
+      pageH
+    );
+
+    return page;
+  }
+
+  async function insertPdf(index: number, pdfByte: string | ArrayBuffer) {
+    const newPDF = await PDFDocument.load(pdfByte);
+    if (pdf) {
+      const copiedPages = await pdf.copyPages(newPDF, newPDF.getPageIndices());
+      index = getNewPageIndex(index);
+
+      copiedPages.forEach((page) => {
+        page = scaleToFitPage(page);
+        pdf.insertPage(index, page);
+        index++;
+      });
+
+      return copiedPages;
+    } else {
+      console.log("pdf not init");
+    }
+  }
+
+  /**
+   *
+   * @param index index of file in file list
+   * @returns new starting index of the file in pdf
+   */
+  function getNewPageIndex(index: number) {
+    if (pdf) {
+      while (index > pdf.getPageCount()) {
+        pdf.addPage([1, 1]); // mark as temporary pages
+      }
+
+      // get the new starting index of the file in pdf
+      while (
+        index < pdf.getPageCount() &&
+        pdf.getPage(index).getSize().width > 1 && // if it's not temporary pages
+        pdf.getPage(index).getSize().height > 1
+      ) {
+        index++;
+        console.log("increment index to", index);
+      }
+
+      // if the actual starting index are used by temporary pages
+      if (
+        index < pdf.getPageCount() &&
+        pdf.getPage(index).getSize().width == 1 &&
+        pdf.getPage(index).getSize().height == 1
+      ) {
+        console.log("removing page", index);
+        pdf.removePage(index);
+      }
+
+      return index;
+    } else {
+      console.log("pdf not init");
+      return -1;
+    }
+  }
+
+  async function getJpgImage(imageBytes: string | ArrayBuffer) {
+    if (pdf == null) {
+      console.log("pdf not init");
+      return;
+    }
+
+    return await pdf.embedJpg(imageBytes);
+  }
+
+  async function getPngImage(imageBytes: string | ArrayBuffer) {
+    if (pdf == null) {
+      console.log("pdf not init");
+      return;
+    }
+
+    return await pdf.embedPng(imageBytes);
+  }
+
+  async function downloadPdf() {
+    if (pdf == null) {
+      console.log("pdf is not initiated");
+      return;
+    }
+    console.log(pageSize);
+
+    const fileDataArray: { file: File; buffer: ArrayBuffer | string }[] =
+      await readFile();
+
+    console.log(fileDataArray);
+
+    const pdfPagesArray: Array<PDFPage | PDFPage[] | undefined> =
+      await addPages(fileDataArray);
+
+    if (pdfPagesArray.length > 0) {
+      const pdfBytes = await pdf.save();
+      console.log("download", pdfBytes);
+      download(pdfBytes, fileName + ".pdf", "application/pdf");
+      await resetPDF();
+    }
+  }
+
+  /**
+   *
+   * @param fileDataArray array of file data
+   * @returns pdf pages
+   */
+  function addPages(
+    fileDataArray: { file: File; buffer: ArrayBuffer | string }[]
+  ): Promise<Array<PDFPage | undefined | PDFPage[]>> {
+    return new Promise((resolve, reject) => {
+      let pdfPages: Array<PDFPage | undefined | PDFPage[]> = [];
+
+      Array.from(fileDataArray).forEach(async (data, index) => {
+        const fileType = data.file.type;
+        if (fileType === "image/jpeg") {
+          console.log("embedding jpeg", data.file.name, index);
+          const page = await insertImage(index, data.buffer, ImageFormats.JPG);
+          pdfPages.push(page);
+        } else if (fileType === "image/png") {
+          console.log("embedding png", data.file.name, index);
+          const page = await insertImage(index, data.buffer, ImageFormats.PNG);
+          pdfPages.push(page);
+        } else if (fileType === "application/pdf") {
+          console.log("embedding pdf", data.file.name, index);
+          const page = await insertPdf(index, data.buffer);
+          pdfPages.push(page);
+        }
+
+        if (pdfPages.length == fileDataArray.length) {
+          resolve(pdfPages);
+        }
+      });
+    });
+  }
+
+  /**
+   * convert array of file to array of file data
+   * @returns array of file data
+   */
+  function readFile(): Promise<{ file: File; buffer: ArrayBuffer | string }[]> {
+    console.log("file list", fileList);
+    return new Promise((resolve, reject) => {
+      let fileDataArray: { file: File; buffer: ArrayBuffer | string }[] = [];
+
+      Array.from(fileList).forEach((file, index) => {
+        console.log("reading", file.name);
+        const reader = new FileReader();
+        reader.onerror = () => {
+          console.error("failed to read file to buffer", file, reader.error);
+          reject();
+        };
+
+        reader.onload = () => {
+          if (reader.result == null) {
+            console.error("file result is null", file, reader.error);
+            return;
+          }
+
+          if (fileDataArray[index] != null) {
+            fileDataArray.splice(index, 0, {
+              file: file,
+              buffer: reader.result,
+            });
+          } else {
+            fileDataArray.push({ file: file, buffer: reader.result });
+          }
+          console.info("successfully read file", file);
+
+          if (fileDataArray.length == fileList.length) {
+            resolve(fileDataArray);
+          }
+        };
+
+        reader.readAsArrayBuffer(file);
+      });
+    });
+  }
+
+  function onFileUpload(input: FileList | null) {
+    if (!input) {
+      return console.log("no file input");
+    }
+    setFileList(Array.from(input));
+    setFileName(input[0].name.replace(/\.[^\/.]+$/, ""));
+  }
+
+  async function resetPDF() {
+    setFileList([]);
+    const pdfDoc = await PDFDocument.create();
+    setPdf(pdfDoc);
+  }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <div className="flex items-center justify-center p-12">
+        <div className="mx-auto w-full max-w-[550px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-for duration-200">
+          <div className="mb-6 pt-4">
+            <label className="mb-5 block text-xl font-semibold">
+              Upload File
+            </label>
+
+            <div className="mb-8">
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                onChange={(e) => onFileUpload(e.target.files)}
+                onClick={(e) => (e.currentTarget.value = "")}
+                multiple
+                name="file"
+                id="file"
+                className="sr-only"
+              />
+              <label
+                htmlFor="file"
+                className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center"
+              >
+                <div>
+                  <span className="mb-2 block text-xl font-semibold">
+                    Drop files here
+                  </span>
+                  <span className="mb-2 block text-base font-medium">Or</span>
+                  <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium">
+                    Browse
+                  </span>
+                </div>
+              </label>
+            </div>
+            <div className="mb-5">
+              <label
+                htmlFor="text"
+                className="mb-3 block text-base font-medium"
+              >
+                File Name
+              </label>
+              <input
+                type="text"
+                name="text"
+                id="text"
+                placeholder="@man.zip_"
+                className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200"
+              />
+            </div>
+            <div className="mb-5">
+              <label
+                htmlFor="text"
+                className="mb-3 block text-base font-medium"
+              >
+                Page Size
+              </label>
+              <select
+                name="pageSize"
+                id="pageSize"
+                className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200"
+                onChange={(e) => {
+                  setPageSize(e.target.value);
+                }}
+              >
+                <option value="A4">A4</option>
+                <option value="Letter">Letter</option>
+                <option value="Legal">Legal</option>
+                <option value="Fit">Fit</option>
+              </select>
+            </div>
+            {/* DROP DOWN CHANGE ORIENTATION */}
+            <div className="mb-5">
+              <label
+                htmlFor="text"
+                className="mb-3 block text-base font-medium"
+              >
+                Orientation
+              </label>
+              <select
+                name="orientation"
+                id="orientation"
+                className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium outline-none focus:border-[#6A64F1] focus:shadow-md dark:text-black duration-200"
+                onChange={(e) => {
+                  setOrientation(parseInt(e.target.value));
+                }}
+              >
+                <option value="0">Potrait</option>
+                <option value="1">Landscape</option>
+              </select>
+            </div>
+            <div className="rounded-md bg-white shadow-md py-4 px-8 text-base font-medium dark:white dark:bg-[#343A40] duration-200">
+              <div className="flex items-center justify-between">
+                {fileList.length > 0 && (
+                  <DraggableList
+                    fileList={fileList}
+                    setFileList={setFileList}
+                  />
+                )}
+                {fileList.length === 0 && (
+                  <li className="text-startduration-200">
+                    No file uploaded. yet.
+                  </li>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <button
+              onClick={downloadPdf}
+              className="hover:shadow-form w-full rounded-md bg-[#774FE9] py-3 px-8 text-center text-base font-semibold text-white outline-none"
+            >
+              Convert File
+            </button>
+          </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </>
+  );
 }
