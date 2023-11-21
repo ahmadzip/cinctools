@@ -1,17 +1,15 @@
-import { FaGripLines } from "react-icons/fa6";
-import { Dispatch, SetStateAction, useState } from "react";
-import { DragDropContext, Draggable } from "react-beautiful-dnd";
-import { StrictModeDroppable } from "./StrictModeDroppable";
-import Image from "next/image";
+import { FaGripLines } from 'react-icons/fa6';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { DragDropContext, Draggable } from 'react-beautiful-dnd';
+import { StrictModeDroppable } from './StrictModeDroppable';
+import Image from 'next/image';
 interface DraggableListInterface {
   fileList: [] | File[];
   setFileList: Dispatch<SetStateAction<[] | File[]>>;
+  type: string;
 }
 
-export default function DraggableList({
-  fileList,
-  setFileList,
-}: DraggableListInterface) {
+export default function DraggableList({ type, fileList, setFileList }: DraggableListInterface) {
   const handleDrop = (droppedItem: any) => {
     if (!droppedItem.destination) return;
     var updatedList = [...fileList];
@@ -23,32 +21,30 @@ export default function DraggableList({
     <DragDropContext onDragEnd={handleDrop}>
       <StrictModeDroppable droppableId="list-container">
         {(provided) => (
-          <div
-            className="list-container"
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-          >
+          <div className="list-container" {...provided.droppableProps} ref={provided.innerRef}>
             {fileList.map((file, index) => (
               <Draggable key={file.name} draggableId={file.name} index={index}>
                 {(provided, snapshot) => (
                   <div
                     className={`file-container flex flex-row items-center space-x-2 px-4 py-2 rounded-xl
-                              ${
-                                snapshot.isDragging
-                                  ? "bg-[#E0E1E6]"
-                                  : "bg-transparent"
-                              }`}
+                              ${snapshot.isDragging ? 'bg-[#E0E1E6]' : 'bg-transparent'}`}
                     ref={provided.innerRef}
                     {...provided.dragHandleProps}
                     {...provided.draggableProps}
                   >
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      width={400}
-                      height={400}
-                      className=""
-                    />
+                    {type === 'image' ? (
+                      <Image src={URL.createObjectURL(file)} alt={file.name} width={400} height={400} className="" />
+                    ) : (
+                      <>
+                        <div className="flex items-center space-x-2">
+                          <FaGripLines className="text-2xl" />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-lg">{file.name}</span>
+                          </div>
+                          <FaGripLines className="text-2xl" />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </Draggable>
