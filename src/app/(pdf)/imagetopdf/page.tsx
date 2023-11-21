@@ -253,6 +253,7 @@ export default function PDFMerger() {
     setFileList([]);
     const pdfDoc = await PDFDocument.create();
     setPdf(pdfDoc);
+    setFileName('');
   }
   return (
     <>
@@ -280,7 +281,7 @@ export default function PDFMerger() {
             </div>
             <div className="mb-5">
               <label htmlFor="text" className="mb-3 block text-base font-medium">
-                Page Size (Beta)
+                Page Size
               </label>
               <select
                 name="pageSize"

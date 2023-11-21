@@ -141,6 +141,7 @@ const PdfMarge = () => {
     setFileList([]);
     const pdfDoc = await PDFDocument.create();
     setPdf(pdfDoc);
+    setFileName('');
   }
   return (
     <>
@@ -168,7 +169,7 @@ const PdfMarge = () => {
             </div>
             <div className="mb-5">
               <label htmlFor="text" className="mb-3 block text-base font-medium">
-                Page Size (Under Development)
+                Page Size
               </label>
               <select
                 name="pageSize"
