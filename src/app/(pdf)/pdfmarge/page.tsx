@@ -127,6 +127,7 @@ const PdfMarge = () => {
       download(pdfBytes, fileName + '.pdf', 'application/pdf');
       toast.dismiss();
       toast.success('File successfully converted ! 🎉');
+      await resetPDF();
     }
   };
   function onFileUpload(input: FileList | null) {
@@ -136,9 +137,10 @@ const PdfMarge = () => {
     setFileList(Array.from(input));
     setFileName(input[0].name.replace(/\.[^\/.]+$/, ''));
   }
-  function onReset() {
+  async function resetPDF() {
     setFileList([]);
-    setFileName('');
+    const pdfDoc = await PDFDocument.create();
+    setPdf(pdfDoc);
   }
   return (
     <>
@@ -221,7 +223,7 @@ const PdfMarge = () => {
             <button onClick={CreatePdf} className="hover:shadow-form w-full rounded-md bg-[#774FE9] py-3 px-8 text-center text-base font-semibold text-white outline-none">
               Convert File
             </button>
-            <button onClick={onReset} className="hover:shadow-form w-full rounded-md bg-[#E0E1E6] py-3 px-8 text-center text-base font-semibold text-black outline-none mt-3">
+            <button onClick={resetPDF} className="hover:shadow-form w-full rounded-md bg-[#E0E1E6] py-3 px-8 text-center text-base font-semibold text-black outline-none mt-3">
               Reset
             </button>
           </div>
