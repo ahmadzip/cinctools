@@ -1,9 +1,12 @@
-import type { Metadata } from 'next';
+'use client';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/app/component/theme-provider';
-import { ThemeSwitcher } from '@/app/component/ThemeSwitcher';
+import { ThemeProvider } from '@/component/ThemeProvider';
+import { ThemeSwitcher } from '@/component/ThemeSwitcher';
 import React from 'react';
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa6';
+import RuningText from '@/component/RunningText';
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -11,8 +14,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${inter.className} bg-slate-50 dark:bg-[#202225] duration-200 flex flex-col min-h-screen`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ThemeSwitcher />
-          <main className="flex-grow">{children}</main>
+          <main className="flex-grow">
+            <Link href={'/'} className="absolute top-0 left-0 mt-4 ml-4 p-4 bg-white dark:bg-[#36393F] rounded-full shadow-md">
+              <FaArrowLeft />
+            </Link>
+            <ThemeSwitcher className="absolute top-0 right-0 mt-4 mr-4 p-4 bg-white dark:bg-[#36393F] rounded-full shadow-md " />
+            {children}
+          </main>
         </ThemeProvider>
         <footer className="flex flex-col items-center justify-center w-full h-24">
           <span className="text-base font-medium text-gray-400">

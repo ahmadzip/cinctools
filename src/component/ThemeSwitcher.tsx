@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
-export const ThemeSwitcher = () => {
+export const ThemeSwitcher = ({ className }: { className: string }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -19,8 +19,8 @@ export const ThemeSwitcher = () => {
 
   return (
     <>
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={theme === 'light' ? 'light' : 'dark'} />
-      <button className={`absolute top-0 right-0 mt-4 mr-4 p-4 bg-white dark:bg-[#36393F] rounded-full shadow-md z-50`} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+      <ToastContainer position="top-left" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={theme === 'light' ? 'light' : 'dark'} />
+      <button className={className} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
         {theme === 'light' ? <FaMoon /> : <FaSun />}
       </button>
     </>

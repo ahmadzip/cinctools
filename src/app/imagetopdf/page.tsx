@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react';
 import { PDFDocument, PageSizes, PDFPage } from 'pdf-lib';
 import download from 'downloadjs';
-import DraggableList from '@/app/component/Droppable';
+import DraggableList from '@/component/Droppable';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
 import ReactTypingEffect from 'react-typing-effect';
+import RuningText from '@/component/RunningText';
 
 enum ImageFormats {
   PNG,
@@ -260,9 +261,7 @@ export default function PDFMerger() {
       <div className="flex items-center justify-center p-12">
         <div className="mx-auto w-full max-w-[550px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-for duration-200">
           <div className="mb-6 pt-4">
-            <label className="mb-5 block text-xl font-semibold text-center">
-              <ReactTypingEffect text="IMAGE TO PDF" speed={100} eraseDelay={100} />
-            </label>
+            <RuningText text="PDF Marge" />
             <div className="mb-8">
               <input type="file" accept=".jpg,.jpeg,.png" onChange={(e) => onFileUpload(e.target.files)} onClick={(e) => (e.currentTarget.value = '')} multiple name="file" id="file" className="sr-only" />
               <label htmlFor="file" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">

@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { PDFDocument, PageSizes, PDFPage } from 'pdf-lib';
 import download from 'downloadjs';
-import DraggableList from '@/app/component/Droppable';
+import DraggableList from '@/component/Droppable';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
-import ReactTypingEffect from 'react-typing-effect';
+import RuningText from '@/component/RunningText';
 
 enum FileOrientation {
   Potrait,
@@ -148,9 +148,7 @@ const PdfMarge = () => {
       <div className="flex items-center justify-center p-12">
         <div className="mx-auto w-full max-w-[550px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md duration-200 shadow-md">
           <div className="mb-6 pt-4">
-            <label className="mb-5 block text-xl font-semibold text-center">
-              <ReactTypingEffect text="PDF MARGE" speed={100} eraseDelay={100} />
-            </label>
+            <RuningText text="PDF MARGE" />
             <div className="mb-8">
               <input type="file" onChange={(e) => onFileUpload(e.target.files)} onClick={(e) => (e.currentTarget.value = '')} multiple name="file" id="file" className="sr-only" accept="application/pdf" />
               <label htmlFor="file" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">

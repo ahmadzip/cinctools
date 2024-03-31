@@ -5,6 +5,8 @@
 :root {
   --toastify-color-light: #fff;
   --toastify-color-dark: #27292c;
+  --shadow-color: #774fe9;
+  --shadow-color-light: white;
 }
 
 @layer utilities {
