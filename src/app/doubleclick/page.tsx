@@ -88,7 +88,7 @@ const DoubleClickPage = () => {
 
   return (
     <div className="flex items-center justify-center p-12">
-      <div className="mx-auto w-full max-w-[1050px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-for duration-200">
+      <div className="mx-auto w-full max-w-[1050px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-md dark:shadow-none duration-200">
         <div className="mb-6 pt-4">
           <RuningText text="Double Click Detector" />
           <button className="hover:shadow-form w-full rounded-md bg-[#774FE9] py-10 px-8 text-center text-xl font-semibold text-white outline-none" onMouseDown={doubleClick} contextMenu={'false'}>

@@ -5,8 +5,8 @@ import download from 'downloadjs';
 import DraggableList from '@/component/Droppable';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
-import ReactTypingEffect from 'react-typing-effect';
 import RuningText from '@/component/RunningText';
+import Swal from 'sweetalert2';
 
 enum ImageFormats {
   PNG,
@@ -30,10 +30,30 @@ export default function PDFMerger() {
       const pdfDoc = await PDFDocument.create();
       setPdf(pdfDoc);
     }
-    initPdf().then((r) => {
-      console.log('@man.zip_');
-    });
-  }, []);
+    initPdf();
+    const showTips = JSON.parse(localStorage.getItem('showTips') || '{}');
+    if (fileList.length !== 0 && (showTips.expire < Date.now() || showTips.expire == null)) {
+      Swal.fire({
+        title: 'Tips',
+        text: 'You can drag and drop the file to change the order of the file',
+        imageUrl: '/tipsimagetopdf.gif',
+        imageWidth: 400,
+        imageHeight: 200,
+        background: localStorage.getItem('theme') === 'dark' ? '#27292C' : '#fff',
+        color: localStorage.getItem('theme') === 'dark' ? '#fff' : '#000',
+        imageAlt: 'Custom image',
+        confirmButtonText: "Don't show again",
+        confirmButtonColor: '#774FE9',
+        showCancelButton: true,
+        cancelButtonText: 'Close',
+        cancelButtonColor: '#6C757D',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.setItem('showTips', JSON.stringify({ expire: Date.now() + 86400000 }));
+        }
+      });
+    }
+  }, [fileList.length]);
 
   async function insertImage(index: number, imageBytes: string | ArrayBuffer, type: ImageFormats) {
     if (pdf == null) {
@@ -259,7 +279,7 @@ export default function PDFMerger() {
   return (
     <>
       <div className="flex items-center justify-center p-12">
-        <div className="mx-auto w-full max-w-[550px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-for duration-200">
+        <div className="mx-auto w-full max-w-[850px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md shadow-md dark:shadow-none duration-200">
           <div className="mb-6 pt-4">
             <RuningText text="PDF Marge" />
             <div className="mb-8">
@@ -314,7 +334,7 @@ export default function PDFMerger() {
               </select>
             </div>
             <div className="rounded-md bg-white shadow-md py-4 px-8 text-base font-medium dark:white dark:bg-[#343A40] duration-200">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-center">
                 {fileList.length > 0 && (
                   <div id="text no-file" className="text-center">
                     <span className="block text-xl font-semibold mb-3">GOOD LUCK ! 🧠</span>

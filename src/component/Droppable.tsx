@@ -35,15 +35,12 @@ export default function DraggableList({ type, fileList, setFileList }: Draggable
                     {type === 'image' ? (
                       <Image src={URL.createObjectURL(file)} alt={file.name} width={400} height={400} className="" />
                     ) : (
-                      <>
-                        <div className="flex items-center space-x-2">
-                          <FaGripLines className="text-2xl" />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-lg">{file.name}</span>
-                          </div>
-                          <FaGripLines className="text-2xl" />
+                      <div className="flex flex-row items-center space-x-2">
+                        <FaGripLines className="text-2xl mr-2" />
+                        <div className="flex flex-col">
+                          <span className="font-bold text-lg">{file.name}</span>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 )}

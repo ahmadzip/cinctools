@@ -146,7 +146,7 @@ const PdfMarge = () => {
   return (
     <>
       <div className="flex items-center justify-center p-12">
-        <div className="mx-auto w-full max-w-[550px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md duration-200 shadow-md">
+        <div className="mx-auto w-full max-w-[850px] bg-white py-6 px-9 dark:bg-[#27292C] rounded-md duration-200 shadow-md dark:shadow-none">
           <div className="mb-6 pt-4">
             <RuningText text="PDF MARGE" />
             <div className="mb-8">
@@ -201,17 +201,18 @@ const PdfMarge = () => {
               </select>
             </div>
             <div className="rounded-md bg-white shadow-md py-4 px-8 text-base font-medium dark:white dark:bg-[#343A40] duration-200">
+              <span className="block text-xl font-semibold mb-3 text text-center">{fileList.length ? 'GOOD LUCK ! 🧠' : 'NO FILE SELECTED YET ! 🤔'}</span>
+              <div className="flex items-center justify-center">
+                {fileList.length === 0 && (
+                  <div id="text no-file" className="text-center">
+                    <Image src="/giphy.webp" width={500} height={500} alt="NOT FOUND" />
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-between">
                 {fileList.length > 0 && (
                   <div id="text no-file" className="text-center">
-                    <span className="block text-xl font-semibold mb-3">GOOD LUCK ! 🧠</span>
                     <DraggableList type="" fileList={fileList} setFileList={setFileList} />
-                  </div>
-                )}
-                {fileList.length === 0 && (
-                  <div id="text no-file" className="text-center">
-                    <span className="block text-xl font-semibold mb-3">NO FILE SELECTED YET ! 🤔</span>
-                    <Image src="/giphy.webp" width={500} height={500} alt="NOT FOUND" />
                   </div>
                 )}
               </div>
