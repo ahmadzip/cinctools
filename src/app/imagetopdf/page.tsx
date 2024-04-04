@@ -31,8 +31,8 @@ export default function PDFMerger() {
       setPdf(pdfDoc);
     }
     initPdf();
-    const showTips = JSON.parse(localStorage.getItem('showTips') || '{}');
-    if (fileList.length !== 0 && (showTips.expire < Date.now() || showTips.expire == null)) {
+    const showTips = JSON.parse(localStorage.getItem('showTipsImageToPdf') || '{}');
+    if (!showTips.expire || showTips.expire < Date.now()) {
       Swal.fire({
         title: 'Tips',
         text: 'You can drag and drop the file to change the order of the file',
@@ -49,7 +49,7 @@ export default function PDFMerger() {
         cancelButtonColor: '#6C757D',
       }).then((result) => {
         if (result.isConfirmed) {
-          localStorage.setItem('showTips', JSON.stringify({ expire: Date.now() + 86400000 }));
+          localStorage.setItem('showTipsImageToPdf', JSON.stringify({ expire: Date.now() + 86400000 }));
         }
       });
     }

@@ -6,6 +6,7 @@ import DraggableList from '@/component/Droppable';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
 import RuningText from '@/component/RunningText';
+import Swal from 'sweetalert2';
 
 enum FileOrientation {
   Potrait,
@@ -25,6 +26,28 @@ const PdfMarge = () => {
     initPdf().then((r) => {
       console.log('@man.zip_');
     });
+    const showTips = JSON.parse(localStorage.getItem('showTipsPdfMarge') || '{}');
+    if (!showTips.expire || showTips.expire < Date.now()) {
+      Swal.fire({
+        title: 'Tips',
+        text: 'You can drag and drop the file to change the order of the file',
+        imageUrl: '/tipspdfmarge.gif',
+        imageWidth: 400,
+        imageHeight: 200,
+        background: localStorage.getItem('theme') === 'dark' ? '#27292C' : '#fff',
+        color: localStorage.getItem('theme') === 'dark' ? '#fff' : '#000',
+        imageAlt: 'Custom image',
+        confirmButtonText: "Don't show again",
+        confirmButtonColor: '#774FE9',
+        showCancelButton: true,
+        cancelButtonText: 'Close',
+        cancelButtonColor: '#6C757D',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.setItem('showTipsPdfMarge', JSON.stringify({ expire: Date.now() + 86400000 }));
+        }
+      });
+    }
   }, []);
   const CreatePdf = async () => {
     if (fileList.length === 0) {

@@ -13,6 +13,7 @@
     "@sweetalert2/themes": "^5.0.15",
     "@types/downloadjs": "^1.4.6",
     "downloadjs": "^1.4.7",
+    "firebase": "^10.10.0",
     "next": "14.0.2",
     "next-themes": "^0.2.1",
     "pdf-lib": "^1.17.1",
